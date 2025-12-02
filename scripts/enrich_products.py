@@ -104,7 +104,7 @@ Given a product name, price, and the Amazon listing description, generate the fo
 2. max_age: Maximum recommended age (integer, 0-99)
 3. gender: Who this gift is best for ("male", "female", or "unisex")
 4. category: Product category (e.g., "electronics", "toys", "books", "home", "fashion", "sports", "beauty", "games", "kitchen", "outdoor")
-5. description: 1-3 sentences describing who this gift is PERFECT for. Focus on personality traits, interests, and hobbies. This will be used for AI semantic matching, so be descriptive about the TYPE of person who would love this gift.
+5. description: 2-5 sentences describing who this gift is PERFECT for. Focus on personality traits, interests, and hobbies. This will be used for AI semantic matching, so be very descriptive about the TYPE of person who would love this gift.
 6. tags: Array of 3-7 keywords/phrases that describe the ideal recipient (e.g., ["tech lover", "gamer", "outdoorsy", "minimalist"])
 
 Respond ONLY with valid JSON matching this exact structure:
