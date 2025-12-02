@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Echo Dot (5th Gen) Smart Speaker with Alexa",
+    "amazon_url": "https://amzn.to/48o535y",
+    "price": 49.99,
+    "prime_eligible": true,
+    "image_url": "https://m.media-amazon.com/images/I/518cRYanpbL._AC_SX679_.jpg",
+    "product_description": "Our most popular smart speaker with Alexa. Improved audio quality delivers clearer vocals, deeper bass, and vibrant sound in any room. Voice control your entertainment, smart home devices, and more. Help friends and family with accessibility features like Tap to Alexa, screen magnifier, and more."
+  },
+  {
+    "name": "Kindle Paperwhite (16 GB)",
+    "amazon_url": "https://amzn.to/example2",
+    "price": 139.99,
+    "prime_eligible": true,
+    "image_url": "https://m.media-amazon.com/images/I/61PHFdjUzrL._AC_SX679_.jpg",
+    "product_description": "Kindle Paperwhite – Now with a 6.8\" display and thinner borders, adjustable warm light, up to 10 weeks of battery life, and 20% faster page turns. Purpose-built for reading, with a 300 ppi glare-free display that reads like real paper, even in direct sunlight."
+  },
+  {
+    "name": "LEGO Star Wars Millennium Falcon Building Set",
+    "amazon_url": "https://amzn.to/example3",
+    "price": 169.99,
+    "prime_eligible": true,
+    "image_url": "https://m.media-amazon.com/images/I/81w2ENsPWQL._AC_SX679_.jpg",
+    "product_description": "Kids can role-play as their favorite characters from the Star Wars saga with this LEGO Millennium Falcon construction toy. Features rotating gun turrets, 2 spring-loaded shooters, a lowering ramp, and an opening cockpit. Includes 7 Star Wars characters: Finn, Chewbacca, C-3PO, Lando Calrissian, Boolio, and 2 Porgs."
+  }
+]

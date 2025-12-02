@@ -1,0 +1,11 @@
+# Amazon Product URLs
+# One URL per line, lines starting with # are ignored
+
+# Short URLs (amzn.to) are automatically expanded
+https://amzn.to/48o535y
+
+# Full Amazon URLs work too
+https://www.amazon.com/dp/B09B8V1LZ3
+
+# Product page URLs also work
+https://www.amazon.com/Kindle-Paperwhite-16-GB-adjustable/dp/B09TMN58KL
