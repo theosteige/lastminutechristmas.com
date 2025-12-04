@@ -2,14 +2,15 @@
   "name": "lastminutechristmas",
   "version": "1.0.0",
   "description": "AI-powered Christmas gift recommendation engine",
-  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "add-product": "tsx scripts/add-product.ts",
-    "add-product:bulk": "tsx scripts/add-product.ts --bulk"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "openai": "^4.20.0"
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:backend": "npm run dev -w @lastminutechristmas/backend",
+    "dev:frontend": "npm run dev -w @lastminutechristmas/frontend",
+    "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

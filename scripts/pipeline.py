@@ -27,12 +27,12 @@ import tempfile
 scripts_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, scripts_dir)
 
-from scrape_amazon import process_urls
+from scrape_amazon import process_urls, MAX_RETRY_ROUNDS, RETRY_BASE_DELAY
 from enrich_products import process_products
 from add_product import bulk_import
 
 
-def run_pipeline(urls: list[str], keep_files: bool = False, output_dir: str = None) -> None:
+def run_pipeline(urls: list[str], keep_files: bool = False, output_dir: str = None, max_retries: int = MAX_RETRY_ROUNDS, retry_delay: int = RETRY_BASE_DELAY) -> None:
     """Run the complete product import pipeline"""
 
     if not urls:
@@ -62,7 +62,7 @@ def run_pipeline(urls: list[str], keep_files: bool = False, output_dir: str = No
         print("═" * 60)
         print("STEP 1/3: Scraping Amazon Products")
         print("═" * 60)
-        process_urls(urls, scraped_path)
+        process_urls(urls, scraped_path, max_retries=max_retries, retry_delay=retry_delay)
 
         # Check if scraping produced any results
         if not os.path.exists(scraped_path):
@@ -153,6 +153,23 @@ Examples:
         "--output-dir", "-o",
         help="Directory to save intermediate files"
     )
+    parser.add_argument(
+        "--max-retries", "-r",
+        type=int,
+        default=MAX_RETRY_ROUNDS,
+        help=f"Maximum retry rounds for failed URLs (default: {MAX_RETRY_ROUNDS})"
+    )
+    parser.add_argument(
+        "--retry-delay", "-d",
+        type=int,
+        default=RETRY_BASE_DELAY,
+        help=f"Base delay in seconds before retrying (default: {RETRY_BASE_DELAY}s, doubles each round)"
+    )
+    parser.add_argument(
+        "--no-retry",
+        action="store_true",
+        help="Disable automatic retry of failed URLs"
+    )
 
     args = parser.parse_args()
 
@@ -173,7 +190,16 @@ Examples:
         print("   Or:    python scripts/pipeline.py --file urls.txt")
         sys.exit(1)
 
-    run_pipeline(urls, keep_files=args.keep_files, output_dir=args.output_dir)
+    # Determine retry settings
+    max_retries = 0 if args.no_retry else args.max_retries
+
+    run_pipeline(
+        urls,
+        keep_files=args.keep_files,
+        output_dir=args.output_dir,
+        max_retries=max_retries,
+        retry_delay=args.retry_delay
+    )
 
 
 if __name__ == "__main__":

@@ -57,6 +57,10 @@ USER_AGENTS = [
 MIN_DELAY = 2
 MAX_DELAY = 5
 
+# Retry configuration
+MAX_RETRY_ROUNDS = 5  # Maximum number of retry rounds for failed URLs
+RETRY_BASE_DELAY = 30  # Base delay before retrying failed URLs (seconds)
+
 
 # ============================================================================
 # TYPES
@@ -302,20 +306,20 @@ def scrape_product(url: str) -> Optional[ScrapedProduct]:
 # MAIN PROCESSING
 # ============================================================================
 
-def process_urls(urls: list[str], output_path: str) -> None:
-    """Process multiple URLs and save results"""
-    print(f"🛒 Scraping {len(urls)} Amazon product(s)...\n")
-
-    products = []
-    success_count = 0
-    error_count = 0
+def scrape_batch(urls: list[str], products: list[dict], round_num: int = 1) -> list[str]:
+    """
+    Scrape a batch of URLs, return list of failed URLs.
+    Successfully scraped products are appended to the products list.
+    """
+    failed_urls = []
+    total = len(urls)
 
     for i, url in enumerate(urls, 1):
         url = url.strip()
         if not url:
             continue
 
-        print(f"[{i}/{len(urls)}] 🔍 {url[:60]}...")
+        print(f"[{i}/{total}] 🔍 {url[:60]}...")
 
         product = scrape_product(url)
 
@@ -323,28 +327,75 @@ def process_urls(urls: list[str], output_path: str) -> None:
             products.append(asdict(product))
             print(f"         ✅ {product.name[:50]}...")
             print(f"         💰 ${product.price:.2f} | Prime: {'Yes' if product.prime_eligible else 'No'}")
-            success_count += 1
         else:
-            error_count += 1
+            failed_urls.append(url)
+            print(f"         ❌ Failed (will retry)")
 
         # Delay between requests (except for the last one)
-        if i < len(urls):
-            delay = random.uniform(MIN_DELAY, MAX_DELAY)
+        if i < total:
+            # Use longer delays in retry rounds
+            min_delay = MIN_DELAY * round_num
+            max_delay = MAX_DELAY * round_num
+            delay = random.uniform(min_delay, max_delay)
             print(f"         ⏳ Waiting {delay:.1f}s...\n")
             time.sleep(delay)
         else:
             print()
+
+    return failed_urls
+
+
+def process_urls(urls: list[str], output_path: str, max_retries: int = MAX_RETRY_ROUNDS, retry_delay: int = RETRY_BASE_DELAY) -> None:
+    """Process multiple URLs and save results, with automatic retry for failures"""
+    print(f"🛒 Scraping {len(urls)} Amazon product(s)...\n")
+
+    products = []
+    pending_urls = [url.strip() for url in urls if url.strip()]
+    total_urls = len(pending_urls)
+
+    # Initial scraping round
+    print("─" * 50)
+    print("Round 1: Initial scraping")
+    print("─" * 50)
+    failed_urls = scrape_batch(pending_urls, products, round_num=1)
+
+    # Retry failed URLs with exponential backoff
+    retry_round = 1
+    while failed_urls and retry_round <= max_retries:
+        wait_time = retry_delay * (2 ** (retry_round - 1))  # Exponential backoff
+        print(f"\n{'─' * 50}")
+        print(f"⚠️  {len(failed_urls)} URL(s) failed. Retrying in {wait_time}s...")
+        print(f"Round {retry_round + 1}/{max_retries + 1}: Retry attempt {retry_round}")
+        print("─" * 50)
+
+        # Wait before retrying (helps with CAPTCHA cooldown)
+        print(f"⏳ Waiting {wait_time}s before retry...\n")
+        time.sleep(wait_time)
+
+        # Retry failed URLs
+        failed_urls = scrape_batch(failed_urls, products, round_num=retry_round + 1)
+        retry_round += 1
 
     # Save results
     if products:
         with open(output_path, "w") as f:
             json.dump(products, f, indent=2)
 
-    print("═" * 50)
-    print(f"✅ Complete: {success_count} scraped, {error_count} failed")
+    # Final summary
+    success_count = len(products)
+    final_failed = len(failed_urls)
+
+    print("\n" + "═" * 50)
+    print(f"✅ Complete: {success_count}/{total_urls} scraped")
+
+    if final_failed > 0:
+        print(f"❌ Failed after {max_retries} retries: {final_failed}")
+        print("   Failed URLs:")
+        for url in failed_urls:
+            print(f"   - {url[:70]}...")
 
     if products:
-        print(f"📁 Output saved to: {output_path}")
+        print(f"\n📁 Output saved to: {output_path}")
         print("")
         print("Next steps:")
         print(f"  1. python scripts/enrich_products.py {output_path}")
@@ -375,6 +426,23 @@ def main():
         default="scraped_products.json",
         help="Output JSON file (default: scraped_products.json)"
     )
+    parser.add_argument(
+        "--max-retries", "-r",
+        type=int,
+        default=MAX_RETRY_ROUNDS,
+        help=f"Maximum retry rounds for failed URLs (default: {MAX_RETRY_ROUNDS})"
+    )
+    parser.add_argument(
+        "--retry-delay", "-d",
+        type=int,
+        default=RETRY_BASE_DELAY,
+        help=f"Base delay in seconds before retrying (default: {RETRY_BASE_DELAY}s, doubles each round)"
+    )
+    parser.add_argument(
+        "--no-retry",
+        action="store_true",
+        help="Disable automatic retry of failed URLs"
+    )
 
     args = parser.parse_args()
 
@@ -395,7 +463,9 @@ def main():
         print("   Or:    python scripts/scrape_amazon.py --file urls.txt")
         sys.exit(1)
 
-    process_urls(urls, args.output)
+    # Determine retry settings
+    max_retries = 0 if args.no_retry else args.max_retries
+    process_urls(urls, args.output, max_retries=max_retries, retry_delay=args.retry_delay)
 
 
 if __name__ == "__main__":
